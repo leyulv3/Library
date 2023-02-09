@@ -20,8 +20,8 @@ public class Book {
     private String pressId;    //出版社ID
     @TableField (exist = false)
     private String pressName;    //出版社名称
-    private Integer borrowedNumber;   //借阅次数
-    private Integer remainingNumber;    //剩余数量
-    private String bookStatus;  //书籍状态
+    private int borrowedNumber;   //借阅次数
+    private int remainingNumber;    //剩余数量
+    private int bookStatus;  //书籍状态
 
 }

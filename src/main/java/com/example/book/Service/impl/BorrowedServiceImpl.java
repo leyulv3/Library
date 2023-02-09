@@ -1,50 +1,62 @@
 package com.example.book.Service.impl;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.example.book.Entity.Book;
 import com.example.book.Entity.Borrowed;
 import com.example.book.Service.BookService;
 import com.example.book.mapper.BorrowedMapper;
 import com.example.book.Service.BorrowedService;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.example.book.util.R;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
+import javax.annotation.Resource;
+
+import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
+import java.util.Date;
+
+import static com.example.book.Entity.Borrowed.getOrderNo;
 
 @Service
 public class BorrowedServiceImpl extends ServiceImpl<BorrowedMapper, Borrowed> implements BorrowedService {
-    @Autowired
+    @Resource
     private BookService bookService;
 
     @Override
-    public boolean submintOrder(String bookId, String userId) {
+    public R submintOrder(Borrowed borrowed) {
         //查询书籍
-        Book book = bookService.getById(bookId);
-        //判断书籍是否存在
-        if (book != null) {
-            //判断书籍是否已经借出
-            if (book.getBookStatus() == "0") {
-                //判断书籍是否已经被预约
-                LambdaQueryWrapper<Borrowed> queryWrapper = new LambdaQueryWrapper<>();
-                queryWrapper.eq(Borrowed::getBookId, bookId);
-                List<Borrowed> list = list(queryWrapper);
-                if (list.size() == 0) {
-                    //借阅书籍
-                    Borrowed borrowed = new Borrowed();
-                    borrowed.setBookId(bookId);
-                    borrowed.setUserId(userId);
-                    save(borrowed);
-                    //修改书籍状态
-                    //book.setIsBorrowed(1);
-                    bookService.updateById(book);
-                    return true;
-                }
-            }
+        Book book = bookService.getById(borrowed.getBookId());
+        if (book == null) {
+            return R.error("该书籍不存在");
         }
-
-
-
-        return false;
+        //判断书籍是否还有库存
+        if (book.getRemainingNumber() <= 0) {
+            return R.error("该书籍已无库存");
+        }
+        //借阅书籍
+        book.setBorrowedNumber(book.getBorrowedNumber() - 1);
+        bookService.updateById(book);
+        //新增订单
+        borrowed.setBorrowedId(getOrderNo());
+        borrowed.setBorrowedStartDate(LocalDateTime.now());
+        return save(borrowed) ? R.success("借阅成功") : R.error("借阅失败");
     }
+
+    @Override
+    public R returnBook(Borrowed borrowed) {
+        //查询书籍
+        Book book = bookService.getById(borrowed.getBookId());
+        if (book == null) {
+            return R.error("该书籍不存在");
+        }
+        //归还书籍
+        book.setBorrowedNumber(book.getBorrowedNumber() + 1);
+        bookService.updateById(book);
+        //修改订单
+        borrowed.setBorrowedEndDate(LocalDateTime.now());
+        return updateById(borrowed) ? R.success("归还成功") : R.error("归还失败");
+    }
+
+
+
 }
