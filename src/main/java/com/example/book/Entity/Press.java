@@ -12,6 +12,7 @@ public class Press {
 	@TableId(value = "press_id")
 	private String pressId;
 	private String pressName;
+
 	private String pressStatus;
 
 }

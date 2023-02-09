@@ -3,6 +3,7 @@ package com.example.book.controller;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.example.book.Entity.Book;
+import com.example.book.Entity.BookType;
 import com.example.book.Service.AuthorService;
 import com.example.book.Service.BookService;
 import com.example.book.Service.BookTypeService;
@@ -76,7 +77,7 @@ public class BookController {
         }
         BookDto bookDto = new BookDto();
         BeanUtils.copyProperties(book, bookDto);
-        bookDto.setBookTypeName(bookTypeService.getById(book.getBookTypeId()).getBookTypeName());
+        bookDto.setBookType(bookTypeService.getById(book.getBookTypeId()).getBookTypeName());
         bookDto.setAuthorName(authorService.getById(book.getAuthorId()).getAuthorName());
         return R.success(bookDto);
     }
@@ -94,6 +95,7 @@ public class BookController {
 
     /**
      * 查询所有图书信息
+     *
      * @param page
      * @param pageSize
      * @param name
@@ -105,7 +107,7 @@ public class BookController {
         List<BookDto> collect = list.stream().map(book -> {
             BookDto bookDto = new BookDto();
             BeanUtils.copyProperties(book, bookDto);
-            bookDto.setBookTypeName(bookTypeService.getById(book.getBookTypeId()).getBookTypeName());
+            bookDto.setBookType(bookTypeService.getById(book.getBookTypeId()).getBookTypeName());
             bookDto.setAuthorName(authorService.getById(book.getAuthorId()).getAuthorName());
             return bookDto;
         }).collect(Collectors.toList());
@@ -114,29 +116,38 @@ public class BookController {
 
     @GetMapping("/page")
     public R<Page> page(int page, int pageSize, String name) {
+        //构造分页对象
         Page<Book> pageInfo = new Page<>(page, pageSize);
         Page<BookDto> bookDtoPage = new Page<>();
+
         //构造条件构造器
-        LambdaQueryWrapper<Book> queryWrapper = new LambdaQueryWrapper();
+        LambdaQueryWrapper<Book> qw = new LambdaQueryWrapper();
         //添加过滤条件
-        queryWrapper.like(StringUtils.isNotEmpty(name), Book::getBookName, name);
+        qw.like(StringUtils.isNotEmpty(name), Book::getBookName, name);
         //添加排序条件
-        queryWrapper.orderByDesc(Book::getBookId);
+        qw.orderByDesc(Book::getBookId);
+
         //执行查询
-        Page page1 = bookService.page(pageInfo, queryWrapper);
+        bookService.page(pageInfo, qw);
+
         //将page1的属性值赋值给bookDtoPage
-        BeanUtils.copyProperties(page1, bookDtoPage);
-        List<Book> records = page1.getRecords();
-        List<BookDto> collect = records.stream().map(book -> {
+        BeanUtils.copyProperties(pageInfo, bookDtoPage, "records");
+
+        List<Book> records = pageInfo.getRecords();
+
+        List<BookDto> list = records.stream().map((book) -> {
+
             BookDto bookDto = new BookDto();
+
             BeanUtils.copyProperties(book, bookDto);
-            //根据图书类型id查询图书类型名称
-            bookDto.setBookTypeName(bookTypeService.getById(book.getBookTypeId()).getBookTypeName());
-            //根据作者id查询作者名称
+
+            //根据图书类型id查询图书类型名称并将名称赋值给bookDto
+            bookDto.setBookType(bookTypeService.getById(book.getBookTypeId()).getBookTypeName());
+            //根据作者id查询作者名称并将名称赋值给bookDto
             bookDto.setAuthorName(authorService.getById(book.getAuthorId()).getAuthorName());
             return bookDto;
         }).collect(Collectors.toList());
-        bookDtoPage.setRecords(collect);
+        bookDtoPage.setRecords(list);//将查询结果赋值给bookDtoPage
         return R.success(bookDtoPage);
     }
     //图书名称 图书id  图书作者 图书类型 借出数量 图书库存 图书状态

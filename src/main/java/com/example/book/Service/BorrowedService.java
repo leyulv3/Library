@@ -5,4 +5,5 @@ import com.example.book.Entity.Borrowed;
 
 public interface BorrowedService extends IService<Borrowed> {
 
+    boolean submintOrder(String bookId, String userId);
 }
