@@ -1,8 +1,6 @@
 package com.example.book.dto;
 
-import com.example.book.Entity.Author;
 import com.example.book.Entity.Book;
-import com.example.book.Entity.BookType;
 import lombok.Data;
 
 import java.util.ArrayList;

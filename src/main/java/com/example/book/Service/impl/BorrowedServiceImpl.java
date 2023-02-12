@@ -54,9 +54,7 @@ public class BorrowedServiceImpl extends ServiceImpl<BorrowedMapper, Borrowed> i
         bookService.updateById(book);
         //修改订单
         borrowed.setBorrowedEndDate(LocalDateTime.now());
+        borrowed.setBorrowStatus(1);
         return updateById(borrowed) ? R.success("归还成功") : R.error("归还失败");
     }
-
-
-
 }

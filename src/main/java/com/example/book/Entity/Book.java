@@ -9,6 +9,7 @@ import lombok.Data;
 public class Book {
     @TableId(value = "book_id")
     private String bookId;    //书籍ID
+
     private String bookName;    //书籍名称
     private String bookTypeId;    //书籍类型ID
     //注解不在表内
